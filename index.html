@@ -1,217 +1,116 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>User Dashboard — Flight Booking</title>
-
-<style>
-body{
-font-family:Arial;
-margin:0;
-background:#e3e7ea;
-}
-
-.header{
-background:#0a2a43;
-color:white;
-padding:15px;
-display:flex;
-justify-content:space-between;
-}
-
-table{
-width:95%;
-border-collapse:collapse;
-margin:20px auto;
-}
-
-th,td{
-border:1px solid #ccc;
-padding:10px;
-text-align:center;
-}
-
-th{
-background:#0a2a43;
-color:white;
-}
-
-button{
-padding:8px 14px;
-background:#007bff;
-color:white;
-border:none;
-border-radius:4px;
-cursor:pointer;
-}
-
-.notice{
-text-align:center;
-margin:20px;
-color:#666;
-font-size:18px;
-}
-</style>
+<title>Flights</title>
 </head>
 
 <body>
 
-<script>
-if(localStorage.getItem("loggedIn")!=="true"){
-window.location.href="login.html";
-}
-</script>
+<h2>Available Flights</h2>
 
-<div class="header">
-<h2>User Dashboard</h2>
-<button onclick="logout()">Logout</button>
-</div>
+<table border="1">
 
-<h3 style="margin-left:20px;">Available Flights</h3>
-
-<p id="noFlights" class="notice"></p>
-
-<table id="flightBox" style="display:none;">
 <thead>
+
 <tr>
-<th>Flight</th>
+
+<th>Flight No</th>
 <th>Destination</th>
 <th>Departure</th>
 <th>Action</th>
+
 </tr>
+
 </thead>
-<tbody id="flightTable"></tbody>
-</table>
 
-<h3 style="margin-left:20px;">My Bookings</h3>
+<tbody id="flightList"></tbody>
 
-<p id="noBookings" class="notice"></p>
-
-<table id="bookingBox" style="display:none;">
-<thead>
-<tr>
-<th>Flight</th>
-<th>Destination</th>
-<th>Departure</th>
-<th>Boarding Time</th>
-</tr>
-</thead>
-<tbody id="bookingTable"></tbody>
 </table>
 
 <script>
 
-const flights = JSON.parse(localStorage.getItem("flights")) || [];
-let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
-const currentUser = localStorage.getItem("currentUser");
+const API = "https://zkuk3ibhb8.execute-api.ca-central-1.amazonaws.com/prod";
 
-const flightTable = document.getElementById("flightTable");
-const bookingTable = document.getElementById("bookingTable");
+const username = localStorage.getItem("username");
 
-const flightBox = document.getElementById("flightBox");
-const bookingBox = document.getElementById("bookingBox");
+if(!username){
 
-const noFlights = document.getElementById("noFlights");
-const noBookings = document.getElementById("noBookings");
+alert("Login first");
 
+window.location="login.html";
 
-// SHOW FLIGHTS
-if(flights.length === 0){
-noFlights.textContent = "No flights available. Please check later.";
-} else {
-flightBox.style.display = "table";
-
-flightTable.innerHTML = ""; // Clear old rows first
-
-if (flights.length === 0) {
-noFlights.textContent = "No flights available. Please check later.";
-flightBox.style.display = "none";
-} else {
-noFlights.textContent = "";
-flightBox.style.display = "table";
-
-flights.forEach((f, index) => {
-
-    // Skip empty or broken entries
-    if (!f.f || !f.d || !f.t) return;
-
-    flightTable.innerHTML += `
-    <tr>
-        <td>${f.f}</td>
-        <td>${f.d}</td>
-        <td>${f.t}</td>
-        <td><button onclick="bookFlight(${index})">Book Now</button></td>
-    </tr>`;
-});
-}
 }
 
+// Load flights
+async function loadFlights(){
 
-// BOOK FLIGHT
-function bookFlight(index){
+const res = await fetch(`${API}/flights`);
 
-const flight = flights[index];
+const flights = await res.json();
 
-// Calculate boarding time (30 minutes earlier)
-let [hour, minute] = flight.t.split(":").map(Number);
-minute -= 30;
+const list = document.getElementById("flightList");
 
-if(minute < 0){
-minute += 60;
-hour -= 1;
-}
+list.innerHTML="";
 
-const boarding = `${hour.toString().padStart(2,"0")}:${minute.toString().padStart(2,"0")}`;
+flights.forEach(f=>{
 
-bookings.push({
-user: currentUser,
-flight: flight.f,
-dest: flight.d,
-departure: flight.t,
-boarding
-});
+list.innerHTML+=`
 
-localStorage.setItem("bookings", JSON.stringify(bookings));
-
-showBookings();
-alert("Flight booked successfully!");
-}
-
-
-// SHOW BOOKINGS
-function showBookings(){
-
-bookingTable.innerHTML="";
-
-const myBookings = bookings.filter(b => b.user === currentUser);
-
-if(myBookings.length === 0){
-noBookings.textContent = "You have no bookings yet.";
-bookingBox.style.display = "none";
-return;
-}
-
-noBookings.textContent = "";
-bookingBox.style.display = "table";
-
-myBookings.forEach(b => {
-bookingTable.innerHTML += `
 <tr>
-<td>${b.flight}</td>
-<td>${b.dest}</td>
-<td>${b.departure}</td>
-<td>${b.boarding}</td>
-</tr>`;
+
+<td>${f.flightNo}</td>
+
+<td>${f.destination}</td>
+
+<td>${f.departure}</td>
+
+<td>
+
+<button onclick="bookFlight('${f.flightNo}')">
+
+Book
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
 });
+
 }
 
-showBookings();
+loadFlights();
 
 
-// LOGOUT
-function logout(){
-localStorage.removeItem("loggedIn");
-localStorage.removeItem("currentUser");
-window.location.href="login.html";
+// Book flight
+
+async function bookFlight(flightNo){
+
+await fetch(`${API}/bookings`,{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+username,
+
+flightNo
+
+})
+
+});
+
+alert("Flight booked");
+
 }
 
 </script>
