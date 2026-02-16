@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel — Flight Tracker</title>
+
+<style>
+body{
+font-family:Arial;
+margin:0;
+background:#f2f2f2;
+}
+
+.header{
+background:#0a2a43;
+color:white;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.box{
+padding:20px;
+}
+
+input{
+padding:10px;
+margin:5px;
+width:200px;
+}
+
+button{
+padding:10px 15px;
+background:#0a2a43;
+color:white;
+border:none;
+cursor:pointer;
+border-radius:4px;
+}
+
+button:hover{
+background:#083152;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#0a2a43;
+color:white;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ADMIN SECURITY -->
+<script>
+if(localStorage.getItem("adminLoggedIn") !== "true"){
+window.location.href = "login.html";
+}
+</script>
+
+<div class="header">
+<h2>Admin Panel — Manage Flights</h2>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="box">
+
+<h3>Add Flight</h3>
+
+<input id="flight" placeholder="Flight No (ex: AC101)">
+<input id="dest" placeholder="Destination (ex: Toronto)">
+<input id="time" placeholder="Time (HH:MM)">
+<button onclick="addFlight()">Add Flight</button>
+
+<h3>Flights List</h3>
+
+<table>
+<thead>
+<tr>
+<th>Flight</th>
+<th>Destination</th>
+<th>Departure Time</th>
+</tr>
+</thead>
+<tbody id="flightTable"></tbody>
+</table>
+
+</div>
+
+<script>
+
+let flights = JSON.parse(localStorage.getItem("flights")) || [];
+
+// ADD FLIGHT FUNCTION
+function addFlight(){
+
+const f = document.getElementById("flight").value.trim();
+const d = document.getElementById("dest").value.trim();
+const t = document.getElementById("time").value.trim();
+
+if (!f || !d || !t) {
+alert("Please fill all fields");
+return;
+}
+
+// Save only valid flights
+flights.push({ f, d, t });
+
+localStorage.setItem("flights", JSON.stringify(flights));
+
+showFlights();
+
+// Clear input fields
+document.getElementById("flight").value = "";
+document.getElementById("dest").value = "";
+document.getElementById("time").value = "";
+}
+
+
+// SHOW FLIGHTS
+function showFlights(){
+
+const table = document.getElementById("flightTable");
+table.innerHTML = "";
+
+// Show only valid flights
+flights.forEach((x, index) => {
+
+if (!x.f || !x.d || !x.t) return;
+
+table.innerHTML += `
+<tr>
+<td>${x.f}</td>
+<td>${x.d}</td>
+<td>${x.t}</td>
+</tr>`;
+});
+
+}
+
+showFlights();
+
+
+// LOGOUT FUNCTION
+function logout(){
+localStorage.removeItem("adminLoggedIn");
+window.location.href = "login.html";
+}
+
+</script>
+
+</body>
+</html>
