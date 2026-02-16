@@ -1,162 +1,75 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Panel — Flight Tracker</title>
-
-<style>
-body{
-font-family:Arial;
-margin:0;
-background:#f2f2f2;
-}
-
-.header{
-background:#0a2a43;
-color:white;
-padding:15px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.box{
-padding:20px;
-}
-
-input{
-padding:10px;
-margin:5px;
-width:200px;
-}
-
-button{
-padding:10px 15px;
-background:#0a2a43;
-color:white;
-border:none;
-cursor:pointer;
-border-radius:4px;
-}
-
-button:hover{
-background:#083152;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:20px;
-}
-
-th,td{
-border:1px solid #ccc;
-padding:10px;
-text-align:center;
-}
-
-th{
-background:#0a2a43;
-color:white;
-}
-</style>
+<title>Admin</title>
 </head>
 
 <body>
 
-<!-- ADMIN SECURITY -->
-<script>
-if(localStorage.getItem("adminLoggedIn") !== "true"){
-window.location.href = "login.html";
-}
-</script>
+<h2>Add Flight</h2>
 
-<div class="header">
-<h2>Admin Panel — Manage Flights</h2>
-<button onclick="logout()">Logout</button>
-</div>
+<input id="flight" placeholder="Flight No"><br><br>
 
-<div class="box">
+<input id="dest" placeholder="Destination"><br><br>
 
-<h3>Add Flight</h3>
+<input id="time" placeholder="Departure"><br><br>
 
-<input id="flight" placeholder="Flight No (ex: AC101)">
-<input id="dest" placeholder="Destination (ex: Toronto)">
-<input id="time" placeholder="Time (HH:MM)">
 <button onclick="addFlight()">Add Flight</button>
 
-<h3>Flights List</h3>
+<p>
 
-<table>
-<thead>
-<tr>
-<th>Flight</th>
-<th>Destination</th>
-<th>Departure Time</th>
-</tr>
-</thead>
-<tbody id="flightTable"></tbody>
-</table>
+<a href="login.html">Logout</a>
 
-</div>
+</p>
 
 <script>
 
-let flights = JSON.parse(localStorage.getItem("flights")) || [];
+const API="https://zkuk3ibhb8.execute-api.ca-central-1.amazonaws.com/prod";
 
-// ADD FLIGHT FUNCTION
-function addFlight(){
+async function addFlight(){
 
-const f = document.getElementById("flight").value.trim();
-const d = document.getElementById("dest").value.trim();
-const t = document.getElementById("time").value.trim();
+const flightNo=document.getElementById("flight").value;
 
-if (!f || !d || !t) {
-alert("Please fill all fields");
-return;
-}
+const destination=document.getElementById("dest").value;
 
-// Save only valid flights
-flights.push({ f, d, t });
+const departure=document.getElementById("time").value;
 
-localStorage.setItem("flights", JSON.stringify(flights));
+const res=await fetch(`${API}/flights`,{
 
-showFlights();
+method:"POST",
 
-// Clear input fields
-document.getElementById("flight").value = "";
-document.getElementById("dest").value = "";
-document.getElementById("time").value = "";
-}
+headers:{
 
+"Content-Type":"application/json"
 
-// SHOW FLIGHTS
-function showFlights(){
+},
 
-const table = document.getElementById("flightTable");
-table.innerHTML = "";
+body:JSON.stringify({
 
-// Show only valid flights
-flights.forEach((x, index) => {
+flightNo,
 
-if (!x.f || !x.d || !x.t) return;
+destination,
 
-table.innerHTML += `
-<tr>
-<td>${x.f}</td>
-<td>${x.d}</td>
-<td>${x.t}</td>
-</tr>`;
+departure
+
+})
+
 });
 
+const data=await res.json();
+
+if(res.ok){
+
+alert("Flight added");
+
 }
 
-showFlights();
+else{
 
+alert(data.error);
 
-// LOGOUT FUNCTION
-function logout(){
-localStorage.removeItem("adminLoggedIn");
-window.location.href = "login.html";
+}
+
 }
 
 </script>
